@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salesforce → Teams Notification System</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e1a;
+        --surface: #111827;
+        --surface2: #1a2235;
+        --border: #1e2d45;
+        --blue: #3b82f6;
+        --blue-glow: rgba(59, 130, 246, 0.15);
+        --cyan: #06b6d4;
+        --green: #10b981;
+        --orange: #f59e0b;
+        --red: #ef4444;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --text-dimmer: #4a5568;
+        --code-bg: #0d1117;
+        --accent: #3b82f6;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+        line-height: 1.7;
+        min-height: 100vh;
+      }
+
+      /* Grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(59, 130, 246, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ── HERO ── */
+      .hero {
+        padding: 80px 0 60px;
+        text-align: center;
+        position: relative;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 600px;
+        height: 300px;
+        background: radial-gradient(
+          ellipse,
+          rgba(59, 130, 246, 0.12) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: var(--blue);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 0.05em;
+        margin-bottom: 28px;
+        animation: fadeIn 0.6s ease;
+      }
+
+      .hero h1 {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(32px, 5vw, 52px);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 20px;
+        animation: slideUp 0.7s ease;
+      }
+
+      .hero h1 .sf {
+        color: var(--blue);
+      }
+      .hero h1 .arrow {
+        color: var(--text-dim);
+        margin: 0 8px;
+      }
+      .hero h1 .teams {
+        color: var(--cyan);
+      }
+
+      .hero p {
+        color: var(--text-dim);
+        font-size: 17px;
+        max-width: 600px;
+        margin: 0 auto 36px;
+        animation: slideUp 0.8s ease;
+      }
+
+      .hero-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        animation: slideUp 0.9s ease;
+      }
+
+      .tag {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* ── NAV ── */
+      .toc {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin: 40px 0;
+      }
+
+      .toc h3 {
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+
+      .toc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 6px;
+      }
+
+      .toc a {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 13px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .toc a:hover {
+        background: var(--blue-glow);
+        color: var(--blue);
+      }
+
+      /* ── SECTIONS ── */
+      section {
+        margin: 60px 0;
+        scroll-margin-top: 20px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section-num {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--blue);
+        background: var(--blue-glow);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+
+      .section-header h2 {
+        font-family: "Syne", sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      /* ── PROBLEM CARDS ── */
+      .problem-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .problem-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--red);
+        border-radius: 8px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .problem-card .icon {
+        font-size: 18px;
+        margin-top: 1px;
+      }
+      .problem-card p {
+        color: var(--text-dim);
+        font-size: 14px;
+      }
+      .problem-card strong {
+        color: var(--text);
+      }
+
+      /* ── SOLUTION CARDS ── */
+      .solution-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      .solution-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px;
+        transition: border-color 0.2s, transform 0.2s;
+      }
+
+      .solution-card:hover {
+        border-color: var(--blue);
+        transform: translateY(-2px);
+      }
+
+      .solution-card .sc-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .solution-card h4 {
+        font-family: "Syne", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+      }
+
+      .solution-card p {
+        color: var(--text-dim);
+        font-size: 13px;
+      }
+
+      /* ── FLOW DIAGRAM ── */
+      .flow {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px;
+        overflow-x: auto;
+      }
+
+      .flow-chain {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        align-items: flex-start;
+      }
+
+      .flow-node {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 380px;
+        transition: border-color 0.2s;
+      }
+
+      .flow-node:hover {
+        border-color: var(--blue);
+      }
+
+      .flow-node .fn-icon {
+        font-size: 20px;
+      }
+
+      .flow-node .fn-content {
+      }
+      .flow-node .fn-title {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .flow-node .fn-sub {
+        font-size: 11px;
+        color: var(--text-dimmer);
+        margin-top: 2px;
+      }
+
+      .flow-arrow {
+        display: flex;
+        align-items: center;
+        padding: 4px 0 4px 34px;
+        color: var(--text-dimmer);
+        font-size: 18px;
+      }
+
+      .flow-children {
+        padding-left: 40px;
+        border-left: 1px dashed var(--border);
+        margin-left: 30px;
+      }
+
+      .flow-child {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      .flow-child::before {
+        content: "├──";
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-dimmer);
+        font-size: 11px;
+      }
+
+      .flow-child:last-child::before {
+        content: "└──";
+      }
+
+      .flow-child code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--cyan);
+        background: rgba(6, 182, 212, 0.08);
+        padding: 1px 6px;
+        border-radius: 3px;
+      }
+
+      /* ── TABLE ── */
+      .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        overflow: hidden;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+
+      .styled-table thead tr {
+        background: var(--surface2);
+      }
+
+      .styled-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-family: "Syne", sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+      }
+
+      .styled-table td {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        color: var(--text-dim);
+        vertical-align: top;
+      }
+
+      .styled-table tbody tr:hover td {
+        background: rgba(59, 130, 246, 0.03);
+      }
+
+      .styled-table code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--cyan);
+        background: rgba(6, 182, 212, 0.08);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 600;
+      }
+
+      .type-apex {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--blue);
+      }
+      .type-meta {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--orange);
+      }
+      .type-obj {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--green);
+      }
+      .type-setup {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--red);
+      }
+      .type-job {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+      }
+
+      /* ── CODE BLOCKS ── */
+      .code-wrapper {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 16px 0;
+      }
+
+      .code-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .code-lang {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .code-lang::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+
+      .copy-btn {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        font-family: "DM Sans", sans-serif;
+        transition: all 0.2s;
+      }
+
+      .copy-btn:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+
+      pre {
+        padding: 20px;
+        overflow-x: auto;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: #cdd6f4;
+      }
+
+      /* Syntax highlight colors */
+      .kw {
+        color: #89b4fa;
+      }
+      .cl {
+        color: #cba6f7;
+      }
+      .fn {
+        color: #89dceb;
+      }
+      .st {
+        color: #a6e3a1;
+      }
+      .cm {
+        color: #585b70;
+        font-style: italic;
+      }
+      .nm {
+        color: #fab387;
+      }
+
+      /* ── LIMITATIONS ── */
+      .limit-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 14px;
+        transition: border-color 0.2s;
+      }
+
+      .limit-card:hover {
+        border-color: rgba(59, 130, 246, 0.3);
+      }
+
+      .limit-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        background: var(--surface2);
+        cursor: pointer;
+      }
+
+      .limit-error {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--red);
+        flex: 1;
+      }
+
+      .limit-body {
+        padding: 16px 18px;
+        border-top: 1px solid var(--border);
+      }
+
+      .limit-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .limit-why,
+      .limit-fix {
+        padding: 12px 14px;
+        border-radius: 8px;
+      }
+
+      .limit-why {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+      }
+
+      .limit-fix {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+      }
+
+      .limit-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .limit-why .limit-label {
+        color: var(--red);
+      }
+      .limit-fix .limit-label {
+        color: var(--green);
+      }
+
+      .limit-why p,
+      .limit-fix p {
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.6;
+      }
+
+      /* ── STEPS ── */
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .step {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .step-num {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        background: var(--blue-glow);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--blue);
+        font-weight: 600;
+      }
+
+      .step-content h4 {
+        font-family: "Syne", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .step-content p {
+        color: var(--text-dim);
+        font-size: 13px;
+      }
+
+      /* ── NOTIFICATION PREVIEW ── */
+      .notif-preview {
+        background: #1e1e2e;
+        border: 1px solid #313244;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 480px;
+      }
+
+      .notif-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .notif-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      .notif-meta .name {
+        font-family: "Syne", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #cdd6f4;
+      }
+
+      .notif-meta .time {
+        font-size: 11px;
+        color: #585b70;
+      }
+
+      .notif-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #f38ba8;
+        margin-bottom: 4px;
+      }
+
+      .notif-subtitle {
+        font-size: 12px;
+        color: #585b70;
+        margin-bottom: 16px;
+        font-style: italic;
+      }
+
+      .notif-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .notif-field {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .notif-field .label {
+        color: #89b4fa;
+        font-weight: 600;
+        min-width: 80px;
+      }
+
+      .notif-field .value {
+        color: #a6adc8;
+      }
+
+      .notif-divider {
+        border: none;
+        border-top: 1px solid #313244;
+        margin: 12px 0;
+      }
+
+      /* ── AUTHOR ── */
+      .author-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .author-avatar {
+        width: 64px;
+        height: 64px;
+        min-width: 64px;
+        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+      }
+
+      .author-info h3 {
+        font-family: "Syne", sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .author-info p {
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      .author-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        text-align: center;
+        padding: 40px 0;
+        color: var(--text-dimmer);
+        font-size: 13px;
+        border-top: 1px solid var(--border);
+        margin-top: 60px;
+      }
+
+      footer span {
+        color: var(--blue);
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--blue);
+      }
+
+      @media (max-width: 600px) {
+        .solution-grid {
+          grid-template-columns: 1fr;
+        }
+        .limit-row {
+          grid-template-columns: 1fr;
+        }
+        .author-card {
+          flex-direction: column;
+        }
+        .flow-node {
+          min-width: unset;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HERO -->
+    <div class="container">
+      <div class="hero">
+        <div class="badge">🔔 Open Source Project</div>
+        <h1>
+          <span class="sf">Salesforce</span>
+          <span class="arrow">→</span>
+          <span class="teams">Microsoft Teams</span>
+          <br />Code Change Notifier
+        </h1>
+        <p>
+          Real-time automated alerts whenever any developer makes code changes
+          in Salesforce Sandbox — built to keep QA teams informed during testing
+          cycles.
+        </p>
+        <div class="hero-tags">
+          <span class="tag">Apex Schedulable</span>
+          <span class="tag">@future Callout</span>
+          <span class="tag">Queueable</span>
+          <span class="tag">REST API</span>
+          <span class="tag">Teams Webhook</span>
+          <span class="tag">SetupAuditTrail</span>
+        </div>
+      </div>
+
+      <!-- TOC -->
+      <div class="toc">
+        <h3>📋 Table of Contents</h3>
+        <div class="toc-grid">
+          <a href="#problem">❓ Problem Statement</a>
+          <a href="#solution">✅ Solution Overview</a>
+          <a href="#architecture">🏗️ Architecture</a>
+          <a href="#components">🧩 Components</a>
+          <a href="#setup">🚀 Setup Guide</a>
+          <a href="#classes">💻 Apex Classes</a>
+          <a href="#scheduling">⏰ Scheduling</a>
+          <a href="#limitations">⚠️ Limitations & Workarounds</a>
+          <a href="#notification">📢 Notification Format</a>
+          <a href="#author">👤 Author</a>
+        </div>
+      </div>
+
+      <!-- PROBLEM -->
+      <section id="problem">
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <h2>Problem Statement</h2>
+        </div>
+        <div class="problem-grid">
+          <div class="problem-card">
+            <span class="icon">👻</span>
+            <p>
+              Developers were making
+              <strong>silent code changes</strong> without informing the QA team
+              during testing
+            </p>
+          </div>
+          <div class="problem-card">
+            <span class="icon">🐛</span>
+            <p>
+              QA would find a defect → developer would
+              <strong>quietly fix it mid-session</strong>
+            </p>
+          </div>
+          <div class="problem-card">
+            <span class="icon">🗣️</span>
+            <p>
+              Developer would then claim
+              <strong><em>"it was always working"</em></strong>
+            </p>
+          </div>
+          <div class="problem-card">
+            <span class="icon">📭</span>
+            <p>
+              QA had <strong>no real-time proof</strong> of when changes
+              occurred
+            </p>
+          </div>
+          <div class="problem-card">
+            <span class="icon">📉</span>
+            <p>
+              Testing results became <strong>unreliable</strong> and trust
+              between teams broke down
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SOLUTION -->
+      <section id="solution">
+        <div class="section-header">
+          <span class="section-num">02</span>
+          <h2>Solution Overview</h2>
+        </div>
+        <div class="solution-grid">
+          <div class="solution-card">
+            <div class="sc-icon">⏰</div>
+            <h4>Every 5 Minutes</h4>
+            <p>12 Scheduled Jobs run automatically throughout every hour</p>
+          </div>
+          <div class="solution-card">
+            <div class="sc-icon">🔍</div>
+            <h4>SetupAuditTrail</h4>
+            <p>
+              Queries Salesforce's own audit log via REST API to detect changes
+            </p>
+          </div>
+          <div class="solution-card">
+            <div class="sc-icon">📢</div>
+            <h4>Teams Notification</h4>
+            <p>
+              Sends formatted alerts to Microsoft Teams channel via Incoming
+              Webhook
+            </p>
+          </div>
+          <div class="solution-card">
+            <div class="sc-icon">🔁</div>
+            <h4>No Duplicates</h4>
+            <p>
+              Tracks last checked timestamp — same notification never sent twice
+            </p>
+          </div>
+          <div class="solution-card">
+            <div class="sc-icon">🤖</div>
+            <h4>Zero Manual Work</h4>
+            <p>Fully automated after one-time setup — runs forever</p>
+          </div>
+          <div class="solution-card">
+            <div class="sc-icon">🎯</div>
+            <h4>Targeted Detection</h4>
+            <p>Detects Apex Classes, Apex Triggers, and Flows only</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section id="architecture">
+        <div class="section-header">
+          <span class="section-num">03</span>
+          <h2>System Architecture</h2>
+        </div>
+        <div class="flow">
+          <div class="flow-chain">
+            <div class="flow-node">
+              <span class="fn-icon">⏰</span>
+              <div class="fn-content">
+                <div class="fn-title">12 Scheduled Jobs fire</div>
+                <div class="fn-sub">
+                  Every 5 minutes — CodeChangeDetector_0, _5, _10...55
+                </div>
+              </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">
+              <span class="fn-icon">📞</span>
+              <div class="fn-content">
+                <div class="fn-title">CodeChangeDetector.execute()</div>
+                <div class="fn-sub">
+                  Schedulable interface — cannot make HTTP calls directly
+                </div>
+              </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">
+              <span class="fn-icon">🔮</span>
+              <div class="fn-content">
+                <div class="fn-title">runAsync() — @future(callout=true)</div>
+                <div class="fn-sub">
+                  Bridge between Scheduled Apex and HTTP callouts
+                </div>
+              </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">
+              <span class="fn-icon">🔍</span>
+              <div class="fn-content">
+                <div class="fn-title">checkForChanges()</div>
+                <div class="fn-sub">
+                  Core logic — queries, filters, notifies
+                </div>
+              </div>
+            </div>
+            <div class="flow-children">
+              <div class="flow-child">
+                Read last timestamp from <code>Code_Check_Log__c</code>
+              </div>
+              <div class="flow-child">
+                HTTP GET → Salesforce REST API → <code>SetupAuditTrail</code>
+              </div>
+              <div class="flow-child">
+                Filter: Section = <code>Apex Class</code> /
+                <code>Apex Trigger</code> / <code>Flow</code>
+              </div>
+              <div class="flow-child">
+                Filter: CreatedDate &gt; lastCheckTimestamp
+              </div>
+              <div class="flow-child">
+                Build message string with Who / What / When
+              </div>
+              <div class="flow-child">
+                <code>TeamsNotificationService.sendNotification()</code> → HTTP
+                POST → Teams
+              </div>
+              <div class="flow-child">
+                <code>System.enqueueJob(new SaveLogQueueable())</code> → save
+                timestamp
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPONENTS -->
+      <section id="components">
+        <div class="section-header">
+          <span class="section-num">04</span>
+          <h2>Components Created</h2>
+        </div>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Type</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>TeamsNotificationService</code></td>
+              <td><span class="type-badge type-apex">Apex Class</span></td>
+              <td>Sends HTTP POST to Microsoft Teams webhook</td>
+            </tr>
+            <tr>
+              <td><code>CodeChangeDetector</code></td>
+              <td><span class="type-badge type-apex">Schedulable</span></td>
+              <td>Main engine — queries Audit Trail, triggers notification</td>
+            </tr>
+            <tr>
+              <td><code>SaveLogQueueable</code></td>
+              <td><span class="type-badge type-apex">Queueable</span></td>
+              <td>
+                Saves last check timestamp to prevent duplicate notifications
+              </td>
+            </tr>
+            <tr>
+              <td><code>Webhook_Config__mdt</code></td>
+              <td><span class="type-badge type-meta">Custom Metadata</span></td>
+              <td>Stores Teams webhook URL securely — no hardcoding</td>
+            </tr>
+            <tr>
+              <td><code>Code_Check_Log__c</code></td>
+              <td><span class="type-badge type-obj">Custom Object</span></td>
+              <td>Stores last processed timestamp per run</td>
+            </tr>
+            <tr>
+              <td><code>Salesforce_Tooling_API</code></td>
+              <td><span class="type-badge type-setup">Remote Site</span></td>
+              <td>Whitelist for Salesforce REST API endpoint</td>
+            </tr>
+            <tr>
+              <td><code>Teams_Webhook</code></td>
+              <td><span class="type-badge type-setup">Remote Site</span></td>
+              <td>Whitelist for Microsoft Teams webhook endpoint</td>
+            </tr>
+            <tr>
+              <td><code>CodeChangeDetector_0..55</code></td>
+              <td><span class="type-badge type-job">12 Cron Jobs</span></td>
+              <td>Fire every 5 minutes throughout every hour</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SETUP -->
+      <section id="setup">
+        <div class="section-header">
+          <span class="section-num">05</span>
+          <h2>Setup Guide</h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Microsoft Teams — Create Incoming Webhook</h4>
+              <p>
+                Open Teams → Target channel → Right click → Manage Channel →
+                Connectors → Incoming Webhook → Configure → Copy URL
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Remote Site Settings (2 entries)</h4>
+              <p>
+                Setup → Remote Site Settings → New. Create one for your
+                Salesforce org URL and one for
+                <code>https://yourcompany.webhook.office.com</code>
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Custom Metadata Type — Webhook_Config__mdt</h4>
+              <p>
+                Setup → Custom Metadata Types → New. Add
+                <code>Webhook_URL__c</code> Text field. Add a record with your
+                Teams webhook URL.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <h4>Custom Object — Code_Check_Log__c</h4>
+              <p>
+                Setup → Object Manager → Create Custom Object. Add
+                <code>Last_Check_Time__c</code> DateTime field.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <h4>Create all 3 Apex Classes</h4>
+              <p>
+                Developer Console → File → New → Apex Class. Create
+                TeamsNotificationService, CodeChangeDetector, and
+                SaveLogQueueable.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">6</div>
+            <div class="step-content">
+              <h4>Schedule the Jobs</h4>
+              <p>
+                Run the scheduling code in Anonymous Window (Developer Console →
+                Debug → Open Execute Anonymous Window). Jobs run forever
+                automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLASSES -->
+      <section id="classes">
+        <div class="section-header">
+          <span class="section-num">06</span>
+          <h2>Apex Classes</h2>
+        </div>
+
+        <h3
+          style="
+            color: var(--cyan);
+            font-family: 'Syne', sans-serif;
+            margin-bottom: 12px;
+          "
+        >
+          1. TeamsNotificationService
+        </h3>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">apex — TeamsNotificationService.cls</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><span class="kw">public class</span> <span class="cl">TeamsNotificationService</span> {
+    <span class="kw">public static void</span> <span class="fn">sendNotification</span>(<span class="cl">String</span> title, <span class="cl">String</span> message) {
+        <span class="cm">// Webhook URL Custom Metadata se lo</span>
+        <span class="cl">Webhook_Config__mdt</span> config = [
+            <span class="kw">SELECT</span> Webhook_URL__c 
+            <span class="kw">FROM</span> Webhook_Config__mdt 
+            <span class="kw">LIMIT</span> <span class="nm">1</span>
+        ];
+        
+        <span class="cl">String</span> body = <span class="cl">JSON</span>.<span class="fn">serialize</span>(<span class="kw">new</span> Map&lt;String, Object&gt;{
+            <span class="st">'@type'</span>      =&gt; <span class="st">'MessageCard'</span>,
+            <span class="st">'@context'</span>   =&gt; <span class="st">'http://schema.org/extensions'</span>,
+            <span class="st">'themeColor'</span> =&gt; <span class="st">'FF0000'</span>,
+            <span class="st">'summary'</span>    =&gt; title,
+            <span class="st">'sections'</span>   =&gt; <span class="kw">new</span> List&lt;Object&gt;{
+                <span class="kw">new</span> Map&lt;String, Object&gt;{
+                    <span class="st">'activityTitle'</span>    =&gt; <span class="st">'⚠️ Salesforce Code Change Alert!'</span>,
+                    <span class="st">'activitySubtitle'</span> =&gt; <span class="st">'Someone changed code in Sandbox!'</span>,
+                    <span class="st">'text'</span>             =&gt; message
+                }
+            }
+        });
+        
+        <span class="cl">HttpRequest</span> req = <span class="kw">new</span> <span class="cl">HttpRequest</span>();
+        req.<span class="fn">setEndpoint</span>(config.Webhook_URL__c);
+        req.<span class="fn">setMethod</span>(<span class="st">'POST'</span>);
+        req.<span class="fn">setHeader</span>(<span class="st">'Content-Type'</span>, <span class="st">'application/json'</span>);
+        req.<span class="fn">setBody</span>(body);
+        <span class="kw">new</span> <span class="cl">Http</span>().<span class="fn">send</span>(req);
+    }
+    
+    <span class="kw">@future</span>(callout=<span class="kw">true</span>)
+    <span class="kw">public static void</span> <span class="fn">sendNotificationAsync</span>(<span class="cl">String</span> title, <span class="cl">String</span> message) {
+        <span class="fn">sendNotification</span>(title, message);
+    }
+}</pre>
+        </div>
+
+        <h3
+          style="
+            color: var(--cyan);
+            font-family: 'Syne', sans-serif;
+            margin: 28px 0 12px;
+          "
+        >
+          2. CodeChangeDetector
+        </h3>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">apex — CodeChangeDetector.cls</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><span class="kw">public class</span> <span class="cl">CodeChangeDetector</span> <span class="kw">implements</span> <span class="cl">Schedulable</span> {
+    
+    <span class="kw">public void</span> <span class="fn">execute</span>(<span class="cl">SchedulableContext</span> sc) {
+        <span class="fn">runAsync</span>();
+    }
+    
+    <span class="kw">@future</span>(callout=<span class="kw">true</span>)
+    <span class="kw">public static void</span> <span class="fn">runAsync</span>() {
+        <span class="fn">checkForChanges</span>();
+    }
+    
+    <span class="kw">public static void</span> <span class="fn">checkForChanges</span>() {
+        <span class="cm">// Step 1: Get last check timestamp</span>
+        <span class="cl">DateTime</span> lastCheck;
+        List&lt;<span class="cl">Code_Check_Log__c</span>&gt; logs = [
+            <span class="kw">SELECT</span> Last_Check_Time__c 
+            <span class="kw">FROM</span> Code_Check_Log__c 
+            <span class="kw">ORDER BY</span> CreatedDate <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="nm">1</span>
+        ];
+        lastCheck = logs.isEmpty() ? 
+            <span class="cl">DateTime</span>.<span class="fn">now</span>().<span class="fn">addMinutes</span>(-<span class="nm">2</span>) : logs[<span class="nm">0</span>].Last_Check_Time__c;
+        
+        <span class="cm">// Step 2: Query SetupAuditTrail via REST API</span>
+        <span class="cl">String</span> query = <span class="st">'SELECT+CreatedDate,CreatedBy.Name,Action,Section,Display'</span> +
+                       <span class="st">'+FROM+SetupAuditTrail+ORDER+BY+CreatedDate+DESC+LIMIT+50'</span>;
+        <span class="cl">HttpRequest</span> req = <span class="kw">new</span> <span class="cl">HttpRequest</span>();
+        req.<span class="fn">setEndpoint</span>(<span class="cl">URL</span>.<span class="fn">getOrgDomainUrl</span>().<span class="fn">toExternalForm</span>() 
+            + <span class="st">'/services/data/v59.0/query/?q='</span> + query);
+        req.<span class="fn">setMethod</span>(<span class="st">'GET'</span>);
+        req.<span class="fn">setHeader</span>(<span class="st">'Authorization'</span>, <span class="st">'OAuth '</span> + <span class="cl">UserInfo</span>.<span class="fn">getSessionId</span>());
+        req.<span class="fn">setHeader</span>(<span class="st">'Content-Type'</span>, <span class="st">'application/json'</span>);
+        
+        <span class="cl">HttpResponse</span> res = <span class="kw">new</span> <span class="cl">Http</span>().<span class="fn">send</span>(req);
+        
+        <span class="kw">if</span>(res.<span class="fn">getStatusCode</span>() == <span class="nm">200</span>) {
+            Map&lt;String, Object&gt; result = (Map&lt;String, Object&gt;) 
+                <span class="cl">JSON</span>.<span class="fn">deserializeUntyped</span>(res.<span class="fn">getBody</span>());
+            List&lt;Object&gt; records = (List&lt;Object&gt;) result.<span class="fn">get</span>(<span class="st">'records'</span>);
+            
+            <span class="kw">if</span>(records != <span class="kw">null</span> &amp;&amp; records.<span class="fn">size</span>() &gt; <span class="nm">0</span>) {
+                <span class="cl">String</span> msg = <span class="st">''</span>;
+                <span class="cl">DateTime</span> latestChange = lastCheck;
+                
+                <span class="kw">for</span>(Object rec : records) {
+                    Map&lt;String, Object&gt; record = (Map&lt;String, Object&gt;) rec;
+                    <span class="cl">String</span> section = (<span class="cl">String</span>) record.<span class="fn">get</span>(<span class="st">'Section'</span>);
+                    <span class="cl">String</span> createdDateStr = (<span class="cl">String</span>) record.<span class="fn">get</span>(<span class="st">'CreatedDate'</span>);
+                    
+                    <span class="cm">// Step 3: Filter Apex Class, Apex Trigger, Flow only</span>
+                    <span class="kw">if</span>(section != <span class="st">'Apex Class'</span> &amp;&amp; section != <span class="st">'Apex Trigger'</span> &amp;&amp; section != <span class="st">'Flow'</span>)
+                        <span class="kw">continue</span>;
+                    
+                    <span class="cm">// Step 4: Only changes after last check</span>
+                    <span class="cl">DateTime</span> createdDate = <span class="cl">DateTime</span>.<span class="fn">valueOfGmt</span>(
+                        createdDateStr.<span class="fn">replace</span>(<span class="st">'T'</span>, <span class="st">' '</span>).<span class="fn">replace</span>(<span class="st">'Z'</span>, <span class="st">''</span>));
+                    <span class="kw">if</span>(createdDate &lt;= lastCheck) <span class="kw">continue</span>;
+                    <span class="kw">if</span>(createdDate &gt; latestChange) latestChange = createdDate;
+                    
+                    Map&lt;String, Object&gt; createdBy = (Map&lt;String, Object&gt;) record.<span class="fn">get</span>(<span class="st">'CreatedBy'</span>);
+                    msg += <span class="st">'👤 **Who:** '</span> + createdBy.<span class="fn">get</span>(<span class="st">'Name'</span>) + <span class="st">' \n\n'</span>;
+                    msg += <span class="st">'🔧 **What:** '</span> + record.<span class="fn">get</span>(<span class="st">'Display'</span>) + <span class="st">' \n\n'</span>;
+                    msg += <span class="st">'📁 **Section:** '</span> + section + <span class="st">' \n\n'</span>;
+                    msg += <span class="st">'🕐 **When:** '</span> + createdDateStr + <span class="st">' \n\n---\n\n'</span>;
+                }
+                
+                <span class="kw">if</span>(<span class="cl">String</span>.<span class="fn">isNotBlank</span>(msg)) {
+                    <span class="cl">TeamsNotificationService</span>.<span class="fn">sendNotification</span>(
+                        <span class="st">'⚠️ Salesforce Code Change Alert!'</span>,
+                        <span class="st">'🔔 *Code Change Detected!*\n\n'</span> + msg);
+                }
+                <span class="cl">System</span>.<span class="fn">enqueueJob</span>(<span class="kw">new</span> <span class="cl">SaveLogQueueable</span>(latestChange));
+            }
+        }
+    }
+}</pre>
+        </div>
+
+        <h3
+          style="
+            color: var(--cyan);
+            font-family: 'Syne', sans-serif;
+            margin: 28px 0 12px;
+          "
+        >
+          3. SaveLogQueueable
+        </h3>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">apex — SaveLogQueueable.cls</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><span class="kw">public class</span> <span class="cl">SaveLogQueueable</span> <span class="kw">implements</span> <span class="cl">Queueable</span> {
+    <span class="kw">private</span> <span class="cl">DateTime</span> latestChange;
+    
+    <span class="kw">public</span> <span class="fn">SaveLogQueueable</span>(<span class="cl">DateTime</span> latestChange) {
+        <span class="kw">this</span>.latestChange = latestChange;
+    }
+    
+    <span class="kw">public void</span> <span class="fn">execute</span>(<span class="cl">QueueableContext</span> context) {
+        <span class="cl">Code_Check_Log__c</span> log = <span class="kw">new</span> <span class="cl">Code_Check_Log__c</span>();
+        log.Last_Check_Time__c = latestChange;
+        <span class="kw">insert</span> log;
+    }
+}</pre>
+        </div>
+      </section>
+
+      <!-- SCHEDULING -->
+      <section id="scheduling">
+        <div class="section-header">
+          <span class="section-num">07</span>
+          <h2>Scheduling Jobs</h2>
+        </div>
+
+        <h3
+          style="
+            color: var(--green);
+            font-family: 'Syne', sans-serif;
+            margin-bottom: 12px;
+          "
+        >
+          ▶ Start Monitoring
+        </h3>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">apex — Anonymous Window</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><span class="cm">// Creates 12 jobs — fires every 5 minutes</span>
+<span class="kw">for</span>(<span class="cl">Integer</span> i = <span class="nm">0</span>; i &lt; <span class="nm">60</span>; i += <span class="nm">5</span>) {
+    <span class="cl">String</span> cronExp = <span class="st">'0 '</span> + i + <span class="st">' * * * ?'</span>;
+    <span class="cl">System</span>.<span class="fn">schedule</span>(<span class="st">'CodeChangeDetector_'</span> + i, cronExp, <span class="kw">new</span> <span class="cl">CodeChangeDetector</span>());
+}</pre>
+        </div>
+
+        <h3
+          style="
+            color: var(--red);
+            font-family: 'Syne', sans-serif;
+            margin: 24px 0 12px;
+          "
+        >
+          ⏹ Stop Monitoring
+        </h3>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">apex — Anonymous Window</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>List&lt;<span class="cl">CronTrigger</span>&gt; jobs = [
+    <span class="kw">SELECT</span> Id <span class="kw">FROM</span> CronTrigger 
+    <span class="kw">WHERE</span> CronJobDetail.Name <span class="kw">LIKE</span> <span class="st">'CodeChangeDetector%'</span>
+];
+<span class="kw">for</span>(<span class="cl">CronTrigger</span> job : jobs) { <span class="cl">System</span>.<span class="fn">abortJob</span>(job.Id); }</pre>
+        </div>
+      </section>
+
+      <!-- LIMITATIONS -->
+      <section id="limitations">
+        <div class="section-header">
+          <span class="section-num">08</span>
+          <h2>Salesforce Limitations & Workarounds</h2>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >Scheduled Apex cannot make HTTP callouts</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Salesforce Governor Limit — Schedulable interface blocks
+                  direct HTTP calls for security reasons
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Used <code>@future(callout=true)</code> method as a bridge.
+                  Scheduled → @future → HTTP call works!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >@future cannot call another @future method</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Nested @future is strictly prohibited in Salesforce — platform
+                  prevents it completely
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Removed <code>sendNotificationAsync()</code> call — used
+                  <code>sendNotification()</code> directly since we're already
+                  inside @future
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >DML + HTTP Callout cannot happen in same transaction</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Salesforce transaction boundary rule — you cannot mix DML
+                  operations and HTTP callouts in the same execution context
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Used <code>Queueable</code> class for DML — it runs in a
+                  separate transaction after the callout completes
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >Custom Metadata cannot be updated via Apex DML</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Custom Metadata is deployment-time only — runtime Apex DML
+                  (insert/upsert) is not allowed on it
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Created Custom Object <code>Code_Check_Log__c</code> instead —
+                  Custom Objects support all DML operations normally
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >SetupAuditTrail Section field not filterable in SOQL WHERE</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Salesforce limitation on this specific object — WHERE clause
+                  on Section column throws an error
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Fetched all records via REST API and filtered them in Apex
+                  code using if conditions
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="limit-card">
+          <div class="limit-header">
+            <span>⚡</span>
+            <span class="limit-error"
+              >Tooling API returning HTML instead of JSON</span
+            >
+          </div>
+          <div class="limit-body">
+            <div class="limit-row">
+              <div class="limit-why">
+                <div class="limit-label">Why It Happens</div>
+                <p>
+                  Wrong endpoint used — <code>/tooling/query/</code> requires
+                  different authentication than Developer Console session
+                </p>
+              </div>
+              <div class="limit-fix">
+                <div class="limit-label">Workaround Used</div>
+                <p>
+                  Used <code>/query/</code> endpoint instead — SetupAuditTrail
+                  is available in standard Salesforce REST API
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTIFICATION -->
+      <section id="notification">
+        <div class="section-header">
+          <span class="section-num">09</span>
+          <h2>Notification Format</h2>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 20px">
+          When a code change is detected, Teams receives a formatted
+          MessageCard:
+        </p>
+        <div class="notif-preview">
+          <div class="notif-header">
+            <div class="notif-avatar">🔔</div>
+            <div class="notif-meta">
+              <div class="name">Salesforce Alerts</div>
+              <div class="time">Just now</div>
+            </div>
+          </div>
+          <div class="notif-title">⚠️ Salesforce Code Change Alert!</div>
+          <div class="notif-subtitle">Someone changed code in Sandbox!</div>
+          <div class="notif-body">
+            <div class="notif-field">
+              <span class="label">🔔 Alert</span
+              ><span class="value">Code Change Detected!</span>
+            </div>
+            <hr class="notif-divider" />
+            <div class="notif-field">
+              <span class="label">👤 Who</span
+              ><span class="value">Nitish Bisht</span>
+            </div>
+            <div class="notif-field">
+              <span class="label">🔧 What</span
+              ><span class="value"
+                >Changed ICS_PaymentController Apex Class code</span
+              >
+            </div>
+            <div class="notif-field">
+              <span class="label">📁 Section</span
+              ><span class="value">Apex Class</span>
+            </div>
+            <div class="notif-field">
+              <span class="label">🕐 When</span
+              ><span class="value">2026-04-05T10:30:00.000+0000</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AUTHOR -->
+      <section id="author">
+        <div class="section-header">
+          <span class="section-num">10</span>
+          <h2>Author</h2>
+        </div>
+        <div class="author-card">
+          <div class="author-avatar">👨‍💻</div>
+          <div class="author-info">
+            <h3>Nitish Bisht</h3>
+            <p>Salesforce QA Automation Engineer · Accenture · April 2026</p>
+            <div class="author-tags">
+              <span class="tag">Salesforce Certified Admin</span>
+              <span class="tag">Selenium + Java</span>
+              <span class="tag">Service Cloud</span>
+              <span class="tag">B.Tech CSE 2023</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          Built to solve a real QA problem —
+          <span
+            >developers making silent code changes during testing cycles.</span
+          >
+        </p>
+        <p style="margin-top: 8px">⭐ Star this project if it helped you!</p>
+      </footer>
+    </div>
+
+    <script>
+      function copyCode(btn) {
+        const pre = btn.closest(".code-wrapper").querySelector("pre");
+        const text = pre.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = "Copied!";
+          btn.style.color = "#10b981";
+          btn.style.borderColor = "#10b981";
+          setTimeout(() => {
+            btn.textContent = "Copy";
+            btn.style.color = "";
+            btn.style.borderColor = "";
+          }, 2000);
+        });
+      }
+
+      // Fade in sections on scroll
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.style.opacity = "1";
+              e.target.style.transform = "translateY(0)";
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      document.querySelectorAll("section").forEach((s) => {
+        s.style.opacity = "0";
+        s.style.transform = "translateY(20px)";
+        s.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+        observer.observe(s);
+      });
+    </script>
+  </body>
+</html>
